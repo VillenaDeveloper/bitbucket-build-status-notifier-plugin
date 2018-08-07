@@ -35,6 +35,9 @@ import java.util.logging.Logger;
 
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
+import org.springframework.util.CollectionUtils;
+
+import static java.util.Arrays.asList;
 
 public class GitScmAdapter implements ScmAdapter {
     private static final Logger logger = Logger.getLogger(GitScmAdapter.class.getName());
@@ -49,6 +52,14 @@ public class GitScmAdapter implements ScmAdapter {
 
     public Map<String, URIish> getCommitRepoMap() throws Exception {
         List<RemoteConfig> repoList = this.gitScm.getRepositories();
+
+        String str = "";
+        str = getStringBranches(repoList, str);
+
+        if (!CollectionUtils.isEmpty(repoList) && repoList.size() == 2 &&  str.contains("origin") && str.contains("upstream")){
+            repoList = asList(this.gitScm.getRepositories().get(0));
+        }
+
         if (repoList.size() != 1) {
             throw new Exception("None or multiple repos");
         }
@@ -62,5 +73,17 @@ public class GitScmAdapter implements ScmAdapter {
         }
 
         return commitRepoMap;
+    }
+
+    private String getStringBranches(List<RemoteConfig> repoList, String str) {
+        try {
+
+            for (RemoteConfig repo : repoList) {
+                str = str +  repo.getName() + "##";
+            }
+        } catch (Exception e){
+            str = "Error logging branches";
+        }
+        return str;
     }
 }
